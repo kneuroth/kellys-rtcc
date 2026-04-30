@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#3A7BD5" />
+    <title>Kelly's Ride to Conquer Cancer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Always-visible elements -->
+    <img src="rtcclogo.png" id="logo" alt="Ride to Conquer Cancer" />
+    <a
+      href="#"
+      class="donate-link"
+      id="donate-btn"
+      target="_blank"
+      rel="noopener"
+      >Donate</a
+    >
+
+    <!-- Game canvas -->
+    <canvas id="game"></canvas>
+
+    <!-- ── Start screen ──────────────────────────────────────────────────── -->
+    <div id="overlay-start" class="overlay">
+      <img
+        src="rtcclogo.png"
+        class="overlay-logo"
+        alt="Ride to Conquer Cancer"
+      />
+      <h1>Ride to Conquer Cancer</h1>
+      <p>
+        Help Kelly dodge obstacles and raise money to fight cancer.<br />
+        Move your mouse (or finger) in the <strong>bottom half</strong> of the
+        screen to steer.
+      </p>
+      <button id="btn-start" class="btn-primary">Start Riding!</button>
+      <a
+        href="#"
+        class="donate-link btn-donate-big"
+        target="_blank"
+        rel="noopener"
+        style="font-size: clamp(14px, 2vw, 18px); padding: 12px 28px"
+      >
+        Skip &amp; Donate Now ♥
+      </a>
+    </div>
+
+    <!-- ── Game over screen ──────────────────────────────────────────────── -->
+    <div id="overlay-gameover" class="overlay hidden">
+      <h2>You Crashed!</h2>
+      <p class="score-display">
+        You survived <span id="final-score">0</span> metres
+      </p>
+      <p>Every metre counts — help Kelly finish the real ride!</p>
+      <a
+        href="#"
+        class="donate-link btn-donate-big"
+        target="_blank"
+        rel="noopener"
+      >
+        Donate to Support Kelly ♥
+      </a>
+      <button id="btn-restart" class="btn-secondary">Try Again</button>
+    </div>
+
+    <!-- Scripts (order matters — config first, game last) -->
+    <script src="js/config.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/world.js"></script>
+    <script src="js/obstacles.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/game.js"></script>
+  </body>
+</html>
