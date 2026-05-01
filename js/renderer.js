@@ -1,6 +1,7 @@
 // All canvas drawing: road, sprites (with placeholder fallback), HUD
 const Renderer = (() => {
   let canvas, ctx;
+  let debugMode = false;
   const loaded = {}; // spriteKey → Image (only entries that loaded successfully)
 
   // ── Sprite loading ──────────────────────────────────────────────────────────
@@ -38,12 +39,13 @@ const Renderer = (() => {
   const _placeholders = {
     bikerPedal1: (x, y) => _drawBiker(x, y, 0, false),
     bikerPedal2: (x, y) => _drawBiker(x, y, 0, true),
-    bikerLeft: (x, y) => _drawBiker(x, y, -0.25, false),
-    bikerRight: (x, y) => _drawBiker(x, y, 0.25, false),
+    bikerLeft: (x, y) => _drawBiker(x, y, 0.25, false),
+    bikerRight: (x, y) => _drawBiker(x, y, -0.25, false),
     bikerCrash: (x, y) => _drawBikerCrash(x, y),
-    obstacleRock: (x, y) => _drawRock(x, y),
+    obstacleTree:    (x, y) => _drawTree(x, y),
     obstacleCyclist: (x, y) => _drawCyclist(x, y),
-    obstacleCell: (x, y) => _drawCancerCell(x, y),
+    obstacleCell:    (x, y) => _drawCancerCell(x, y),
+    obstaclePothole: (x, y) => _drawPothole(x, y),
   };
 
   function _drawBiker(x, y, lean, altPedal) {
@@ -119,34 +121,40 @@ const Renderer = (() => {
     ctx.restore();
   }
 
-  function _drawRock(x, y) {
+  function _drawTree(x, y) {
     ctx.save();
     ctx.translate(x, y);
+
+    // Shadow on ground
     ctx.beginPath();
-    // Irregular boulder shape
-    const pts = [
-      [-14, 4],
-      [-8, -12],
-      [4, -14],
-      [14, -4],
-      [12, 8],
-      [4, 14],
-      [-8, 12],
-      [-14, 4],
-    ];
-    ctx.moveTo(pts[0][0], pts[0][1]);
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-    ctx.closePath();
-    ctx.fillStyle = "#7a6a5a";
-    ctx.strokeStyle = "#4a3a2a";
-    ctx.lineWidth = 2;
+    ctx.ellipse(4, 5, 16, 10, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.fill();
-    ctx.stroke();
-    // Highlight
+
+    // Outer foliage
     ctx.beginPath();
-    ctx.ellipse(-3, -4, 4, 3, -0.4, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(255,255,255,0.25)";
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.fillStyle = "#2d7a2d";
     ctx.fill();
+
+    // Mid foliage highlight (gives depth)
+    ctx.beginPath();
+    ctx.arc(-2, -2, 11, 0, Math.PI * 2);
+    ctx.fillStyle = "#3da33d";
+    ctx.fill();
+
+    // Top highlight cluster
+    ctx.beginPath();
+    ctx.arc(-3, -4, 6, 0, Math.PI * 2);
+    ctx.fillStyle = "#55bb55";
+    ctx.fill();
+
+    // Tiny bright specular dot
+    ctx.beginPath();
+    ctx.arc(-5, -6, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fill();
+
     ctx.restore();
   }
 
@@ -215,6 +223,39 @@ const Renderer = (() => {
     ctx.restore();
   }
 
+  function _drawPothole(x, y) {
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Outer rim (cracked asphalt edge)
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 18, 13, 0.2, 0, Math.PI * 2);
+    ctx.fillStyle = "#3a3a3a";
+    ctx.fill();
+
+    // Dark pit
+    ctx.beginPath();
+    ctx.ellipse(-1, 1, 13, 9, 0.2, 0, Math.PI * 2);
+    ctx.fillStyle = "#111111";
+    ctx.fill();
+
+    // Rim highlight (one edge catches light)
+    ctx.beginPath();
+    ctx.ellipse(-4, -3, 7, 4, 0.5, 0, Math.PI);
+    ctx.strokeStyle = "rgba(255,255,255,0.18)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // A couple of crack lines radiating from edge
+    ctx.strokeStyle = "#2a2a2a";
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(14, 3);  ctx.lineTo(20, 7);  ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-15, -4); ctx.lineTo(-21, -8); ctx.stroke();
+
+    ctx.restore();
+  }
+
   // ── Road ────────────────────────────────────────────────────────────────────
   const DASH_H = 40;
   const DASH_GAP = 30;
@@ -229,60 +270,9 @@ const Renderer = (() => {
     return (h >>> 0) / 0xffffffff;
   }
 
-  function _drawCrack(x, y, r0, r1) {
-    const arms = 2 + ((r0 * 3) | 0); // 2–4 arms per crack
-    const baseAng = r1 * Math.PI * 2;
-    ctx.beginPath();
-    for (let i = 0; i < arms; i++) {
-      const ang = baseAng + (i / arms) * Math.PI * 2;
-      const len = 7 + r0 * 12;
-      // Two-segment jagged arm for a realistic crack look
-      const jx = x + Math.cos(ang) * len * 0.45 + (r1 - 0.5) * 5;
-      const jy = y + Math.sin(ang) * len * 0.45 + (r0 - 0.5) * 5;
-      ctx.moveTo(x, y);
-      ctx.lineTo(jx, jy);
-      ctx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
-    }
-    ctx.stroke();
-  }
-
-  function _drawCracks(w, h) {
-    const camX = World.cameraX();
-    const camY = World.cameraY();
-    const BY = CONFIG.BIKER_SCREEN_Y_RATIO;
-    const margin = CRACK_CELL;
-
-    // Cell ranges that are on screen
-    const gx0 = Math.floor((camX - w / 2 - margin) / CRACK_CELL);
-    const gx1 = Math.ceil((camX + w / 2 + margin) / CRACK_CELL);
-    const gy0 = Math.floor((camY - h * BY - margin) / CRACK_CELL);
-    const gy1 = Math.ceil((camY + h * (1 - BY) + margin) / CRACK_CELL);
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(0,0,0,0.20)";
-    ctx.lineWidth = 1.5;
-    ctx.lineCap = "round";
-
-    for (let gx = gx0; gx <= gx1; gx++) {
-      for (let gy = gy0; gy <= gy1; gy++) {
-        const r0 = _hash(gx, gy);
-        if (r0 > CRACK_RATE) continue;
-
-        // Sub-cell position (each cell always gets the same crack)
-        const r1 = _hash(gx + 997, gy);
-        const r2 = _hash(gx, gy + 997);
-        const wx = gx * CRACK_CELL + r1 * CRACK_CELL;
-        const wy = gy * CRACK_CELL + r2 * CRACK_CELL;
-
-        const sp = World.toScreen(wx, wy);
-        _drawCrack(sp.x, sp.y, r0, _hash(gx * 7, gy * 13));
-      }
-    }
-    ctx.restore();
-  }
-
   function _drawRoad() {
-    const w = canvas.width, h = canvas.height;
+    const w = canvas.width,
+      h = canvas.height;
     const BY = CONFIG.BIKER_SCREEN_Y_RATIO;
 
     // Solid asphalt
@@ -290,33 +280,40 @@ const Renderer = (() => {
     ctx.fillRect(0, 0, w, h);
 
     // Cracks — world-space positions, scroll identically to obstacles
-    _drawCracks(w, h);
+    // _drawCracks(w, h);
 
     // Road edges at fixed world X positions — shift with camera like everything else
-    const ROAD_HALF_W = 800;  // world units from centre to each road edge
-    const lx = Math.floor(World.toScreen(-ROAD_HALF_W, 0).x);
-    const rx = Math.floor(World.toScreen( ROAD_HALF_W, 0).x);
+    const lx = Math.floor(World.toScreen(-CONFIG.ROAD_HALF_W, 0).x);
+    const rx = Math.floor(World.toScreen( CONFIG.ROAD_HALF_W, 0).x);
 
     // Shoulder fills (only drawn when the edge is on screen)
-    ctx.fillStyle = CONFIG.COLORS.shoulder;
-    if (lx > 0)  ctx.fillRect(0,  0, lx,      h);
-    if (rx < w)  ctx.fillRect(rx, 0, w - rx,  h);
+    ctx.fillStyle = CONFIG.COLORS.grass;
+    if (lx > 0) ctx.fillRect(0, 0, lx, h);
+    if (rx < w) ctx.fillRect(rx, 0, w - rx, h);
 
     // Solid white edge lines
     ctx.strokeStyle = CONFIG.COLORS.roadLine;
     ctx.lineWidth = 4;
     if (lx > -4 && lx < w + 4) {
-      ctx.beginPath(); ctx.moveTo(lx, 0); ctx.lineTo(lx, h); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(lx, 0);
+      ctx.lineTo(lx, h);
+      ctx.stroke();
     }
     if (rx > -4 && rx < w + 4) {
-      ctx.beginPath(); ctx.moveTo(rx, 0); ctx.lineTo(rx, h); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(rx, 0);
+      ctx.lineTo(rx, h);
+      ctx.stroke();
     }
 
     // Centre dashes — worldX=0, shift with camera
-    const camY      = World.cameraY();
-    const centerX   = Math.floor(World.toScreen(0, 0).x);
-    const firstWY   = Math.floor((camY - h * BY      - DASH_H) / DASH_CYCLE) * DASH_CYCLE;
-    const lastWY    = Math.ceil( (camY + h * (1 - BY) + DASH_H) / DASH_CYCLE) * DASH_CYCLE;
+    const camY = World.cameraY();
+    const centerX = Math.floor(World.toScreen(0, 0).x);
+    const firstWY =
+      Math.floor((camY - h * BY - DASH_H) / DASH_CYCLE) * DASH_CYCLE;
+    const lastWY =
+      Math.ceil((camY + h * (1 - BY) + DASH_H) / DASH_CYCLE) * DASH_CYCLE;
     ctx.fillStyle = CONFIG.COLORS.roadLine;
     for (let wy = firstWY; wy <= lastWY; wy += DASH_CYCLE) {
       ctx.fillRect(centerX - 2, Math.floor(World.toScreen(0, wy).y), 4, DASH_H);
@@ -330,7 +327,7 @@ const Renderer = (() => {
     ctx.shadowColor = "rgba(0,0,0,0.7)";
     ctx.shadowBlur = 6;
     ctx.textAlign = "left";
-    ctx.fillText(`${score} m`, 18, 38);
+    ctx.fillText(`${score} m`, 18, 78);
     ctx.shadowBlur = 0;
 
     // Speed bar (bottom left)
@@ -355,13 +352,76 @@ const Renderer = (() => {
     ctx.fillText("Speed", bx, by - 5);
   }
 
+  // ── Grass trail ─────────────────────────────────────────────────────────────
+  function _drawTrail(trail) {
+    if (!trail.length) return;
+    for (let i = 0; i < trail.length; i++) {
+      const pt = trail[i];
+      const sp = World.toScreen(pt.worldX, pt.worldY);
+      if (sp.y < -20 || sp.y > canvas.height + 20) continue;
+
+      const a  = Math.max(0, pt.alpha);
+      const r1 = _hash(pt.worldX | 0, pt.worldY | 0);
+      const r2 = _hash((pt.worldX | 0) + 500, pt.worldY | 0);
+
+      ctx.save();
+      ctx.globalAlpha = a;
+
+      // Two tyre-width pressed-grass marks
+      ctx.fillStyle = "#3a7a36";
+      for (const dx of [-5, 5]) {
+        ctx.beginPath();
+        ctx.ellipse(sp.x + dx, sp.y, 2.5, 5, (r1 - 0.5) * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // A few lighter grass blade streaks for texture
+      ctx.strokeStyle = "#5db558";
+      ctx.lineWidth = 1;
+      ctx.lineCap = "round";
+      for (let b = 0; b < 3; b++) {
+        const bx = sp.x + (r2 * 16 - 8) + b * 5 - 5;
+        const by = sp.y + (r1 * 6  - 3);
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx + (r1 - 0.5) * 5, by - 5 - r2 * 4);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // ── Debug hitbox overlay ────────────────────────────────────────────────────
+  function _drawHitbox(x, y, color) {
+    const hw = (CONFIG.SPRITE_SIZE * CONFIG.HITBOX_SHRINK) / 2;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 1.5;
+    ctx.globalAlpha = 0.85;
+    // Hitbox rect
+    ctx.strokeRect(x - hw, y - hw, hw * 2, hw * 2);
+    // Centre crosshair
+    ctx.beginPath();
+    ctx.moveTo(x - 4, y); ctx.lineTo(x + 4, y);
+    ctx.moveTo(x, y - 4); ctx.lineTo(x, y + 4);
+    ctx.stroke();
+    // World coords label
+    ctx.fillStyle   = color;
+    ctx.globalAlpha = 0.9;
+    ctx.font        = "9px monospace";
+    ctx.textAlign   = "center";
+    ctx.fillText(`${Math.round(x)},${Math.round(y)}`, x, y - hw - 3);
+    ctx.restore();
+  }
+
   // ── Steering hint text ──────────────────────────────────────────────────────
   function _drawControlHint() {
     const isTouchDevice = navigator.maxTouchPoints > 0;
     const msg = isTouchDevice
       ? "← touch here to steer →"
       : "← hover here to steer →";
-    ctx.font      = "13px 'Arial', sans-serif";
+    ctx.font = "13px 'Arial', sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.35)";
     ctx.textAlign = "center";
     ctx.fillText(msg, canvas.width / 2, canvas.height - 14);
@@ -372,20 +432,70 @@ const Renderer = (() => {
     _drawRoad();
 
     if (state === "PLAYING" || state === "GAMEOVER") {
+      // Grass trail (under everything else)
+      _drawTrail(Player.trail);
+
       // Obstacles
       for (const obs of Obstacles.pool) {
         const s = World.toScreen(obs.worldX, obs.worldY);
         _centeredSprite(obs.spriteKey, s.x, s.y);
+        if (debugMode) _drawHitbox(s.x, s.y, "#ff4444");
       }
 
       // Biker
       const bp = World.toScreen(Player.worldX, Player.worldY);
       _centeredSprite(Player.frameKey, bp.x, bp.y);
+      if (debugMode) _drawHitbox(bp.x, bp.y, "#44aaff");
 
       _drawHUD(score, gameSpeed);
+      if (debugMode) _drawDebugHUD(score, gameSpeed);
       _drawControlHint();
     }
   }
 
-  return { init, drawFrame };
+  function _drawDebugHUD() {
+    const steer = Input.steer.toFixed(2);
+    const wx    = Math.round(Player.worldX);
+    const wy    = Math.round(Player.worldY);
+    ctx.save();
+    ctx.font        = "11px monospace";
+    ctx.fillStyle   = "#00ff88";
+    ctx.textAlign   = "right";
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur  = 4;
+    ctx.fillText(`[DEBUG] D to toggle`, canvas.width - 12, 20);
+    ctx.fillText(`steer: ${steer}`, canvas.width - 12, 36);
+    ctx.fillText(`worldX: ${wx}  worldY: ${wy}`, canvas.width - 12, 52);
+    ctx.fillText(`obstacles: ${Obstacles.pool.length}`, canvas.width - 12, 68);
+    ctx.restore();
+  }
+
+  function drawObstaclePreview(spriteKey, previewCanvas) {
+    const pCtx = previewCanvas.getContext("2d");
+    const s    = previewCanvas.width;
+    pCtx.clearRect(0, 0, s, s);
+
+    // Subtle background disc so the sprite reads against the dark overlay
+    pCtx.beginPath();
+    pCtx.arc(s / 2, s / 2, s / 2 - 2, 0, Math.PI * 2);
+    pCtx.fillStyle = "rgba(255,255,255,0.07)";
+    pCtx.fill();
+
+    if (loaded[spriteKey]) {
+      pCtx.drawImage(loaded[spriteKey], 0, 0, s, s);
+    } else {
+      // Scale placeholders (designed for SPRITE_SIZE) up to fill the preview canvas
+      const scale = s / CONFIG.SPRITE_SIZE;
+      const prev  = ctx;
+      ctx = pCtx;
+      pCtx.save();
+      pCtx.translate(s / 2, s / 2);
+      pCtx.scale(scale, scale);
+      _placeholders[spriteKey]?.(0, 0);  // placeholder already does translate(x,y) internally
+      pCtx.restore();
+      ctx = prev;
+    }
+  }
+
+  return { init, drawFrame, setDebug: v => { debugMode = v; }, drawObstaclePreview };
 })();

@@ -8,6 +8,8 @@
     />
     <meta name="theme-color" content="#3A7BD5" />
     <title>Kelly's Ride to Conquer Cancer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -52,18 +54,31 @@
 
     <!-- ── Game over screen ──────────────────────────────────────────────── -->
     <div id="overlay-gameover" class="overlay hidden">
-      <h2>You Crashed!</h2>
-      <p class="score-display">
-        You survived <span id="final-score">0</span> metres
-      </p>
-      <p>Every metre counts — help Kelly finish the real ride!</p>
+      <div class="crash-into">
+        <h2>
+          You crashed into<br /><span id="crash-into-name">something</span>!
+        </h2>
+        <canvas id="crash-sprite" width="128" height="128"></canvas>
+      </div>
+      <div class="stat-board">
+        <div class="stat-board-title">Run Stats</div>
+        <div class="stat-row">
+          <span class="stat-label">Distance</span>
+          <span class="stat-value"><span id="final-score">0</span>m</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Money Collected</span>
+          <span class="stat-value money"><span id="final-money">$0</span></span>
+        </div>
+      </div>
+      <p>$0 collected... donate to make up for it!</p>
       <a
         href="#"
         class="donate-link btn-donate-big"
         target="_blank"
         rel="noopener"
       >
-        Donate to Support Kelly ♥
+        Donate to Help Murder Cancer
       </a>
       <button id="btn-restart" class="btn-secondary">Try Again</button>
     </div>

@@ -1,87 +1,65 @@
-// Obstacle pool, spawning, movement, collision
+// Obstacle pool — each type has its own independent spawn timer
 const Obstacles = (() => {
-  const TYPES = [
-    { key: "rock",       spriteKey: "obstacleRock",    weight: 4 },
-    { key: "cyclist",    spriteKey: "obstacleCyclist",  weight: 3 },
-    { key: "cancerCell", spriteKey: "obstacleCell",     weight: 3 },
-  ];
-  const TOTAL_WEIGHT = TYPES.reduce((s, t) => s + t.weight, 0);
+  let pool, timers, canvas, lastHit;
 
-  let pool, spawnTimer, spawnInterval, canvas;
-
-  function init(c) {
-    canvas = c;
-    reset();
-  }
+  function init(c) { canvas = c; reset(); }
 
   function reset() {
-    pool          = [];
-    spawnTimer    = 0;
-    spawnInterval = CONFIG.OBSTACLE_INTERVAL;
+    pool    = [];
+    lastHit = null;
+    timers  = {};
+    for (const key of Object.keys(CONFIG.OBSTACLE_TYPES)) timers[key] = 0;
   }
 
-  function _pickType() {
-    let r = Math.random() * TOTAL_WEIGHT;
-    for (const t of TYPES) { r -= t.weight; if (r <= 0) return t; }
-    return TYPES[0];
+  function _scaledInterval(def, gameSpeed) {
+    return Math.max(def.minInterval, def.interval * (CONFIG.BASE_SPEED / gameSpeed));
   }
 
-  function _spawn(gameSpeed) {
-    const type = _pickType();
-    // Spawn just off the bottom of the screen in world coordinates.
-    // worldY decreases as the player moves forward, so "below" the visible
-    // area is at player.worldY + spawnDist.
-    const spawnDist = canvas.height * CONFIG.SPAWN_DIST_RATIO;
-    const spreadX   = Math.min(CONFIG.MAX_WORLD_X, canvas.width * 0.9);
-    pool.push({
-      type:      type.key,
-      spriteKey: type.spriteKey,
-      worldX:    (Math.random() * 2 - 1) * spreadX,
-      worldY:    Player.worldY + spawnDist,
-    });
+  function _spawnX(zone) {
+    const road  = CONFIG.ROAD_HALF_W;
+    const max   = CONFIG.MAX_WORLD_X;
+    if (zone === "road") {
+      return (Math.random() * 2 - 1) * road * 0.88;
+    }
+    // grass — pick left or right side randomly
+    const inner = road * 1.08;
+    const outer = max  * 0.92;
+    const side  = Math.random() < 0.5 ? 1 : -1;
+    return side * (inner + Math.random() * (outer - inner));
   }
 
   function update(dt, gameSpeed) {
-    // Decrease spawn interval as game speeds up
-    spawnInterval = Math.max(
-      CONFIG.MIN_OBSTACLE_INTERVAL,
-      CONFIG.OBSTACLE_INTERVAL * (CONFIG.BASE_SPEED / gameSpeed)
-    );
+    const spawnDist = canvas.height * CONFIG.SPAWN_DIST_RATIO;
 
-    spawnTimer += dt;
-    if (spawnTimer >= spawnInterval) {
-      spawnTimer = 0;
-      _spawn(gameSpeed);
+    for (const [key, def] of Object.entries(CONFIG.OBSTACLE_TYPES)) {
+      timers[key] += dt;
+      if (timers[key] >= _scaledInterval(def, gameSpeed)) {
+        timers[key] = 0;
+        pool.push({
+          key,
+          spriteKey: def.spriteKey,
+          worldX: _spawnX(def.zone),
+          worldY: Player.worldY + spawnDist,
+        });
+      }
     }
 
-    // Cull obstacles that have scrolled past the top of screen
-    pool = pool.filter(obs => {
-      const s = World.toScreen(obs.worldX, obs.worldY);
-      return s.y > -CONFIG.SPRITE_SIZE * 2;
-    });
+    // Cull anything that has scrolled off the top of the screen
+    pool = pool.filter(obs => World.toScreen(obs.worldX, obs.worldY).y > -CONFIG.SPRITE_SIZE * 2);
   }
 
   function checkCollision() {
-    const hw   = (CONFIG.SPRITE_SIZE * CONFIG.HITBOX_SHRINK) / 2;
-    const bikerScreen = World.toScreen(Player.worldX, Player.worldY);
-    const bx = bikerScreen.x, by = bikerScreen.y;
-
+    const hw = (CONFIG.SPRITE_SIZE * CONFIG.HITBOX_SHRINK) / 2;
+    const bp = World.toScreen(Player.worldX, Player.worldY);
     for (const obs of pool) {
-      const s  = World.toScreen(obs.worldX, obs.worldY);
-      const ox = s.x, oy = s.y;
-      if (
-        Math.abs(bx - ox) < hw * 2 &&
-        Math.abs(by - oy) < hw * 2
-      ) return true;
+      const sp = World.toScreen(obs.worldX, obs.worldY);
+      if (Math.abs(bp.x - sp.x) < hw * 2 && Math.abs(bp.y - sp.y) < hw * 2) {
+        lastHit = obs;
+        return true;
+      }
     }
     return false;
   }
 
-  return {
-    init,
-    reset,
-    update,
-    checkCollision,
-    get pool() { return pool; },
-  };
+  return { init, reset, update, checkCollision, get pool() { return pool; }, get lastHit() { return lastHit; } };
 })();
