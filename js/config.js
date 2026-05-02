@@ -9,6 +9,7 @@ const CONFIG = {
     accent: "#E8842A", // orange (logo bottom)
     road: "#555555",
     roadDark: "#4A4A4A",
+    roadEdgeLine: "#7e7e7e",
     roadLine: "#FFFFFF",
     grass: "#246728",
     ui: "#FFFFFF",
@@ -44,10 +45,38 @@ const CONFIG = {
   // minInterval: fastest it can ever spawn regardless of speed
   // zone: "road" spawns on tarmac, "grass" spawns on both grass sides
   OBSTACLE_TYPES: {
-    cyclist:    { name: "a cyclist",    spriteKey: "obstacleCyclist", zone: "road",  interval: 2200, minInterval: 700 },
-    cancerCell: { name: "a cancer cell",spriteKey: "obstacleCell",    zone: "road",  interval: 3000, minInterval: 900 },
-    pothole:    { name: "a pothole",    spriteKey: "obstaclePothole", zone: "road",  interval: 2100, minInterval: 380 },
-    tree:       { name: "a tree",       spriteKey: "obstacleTree",    zone: "grass", interval: 1800, minInterval: 650 },
+    cyclist: {
+      name: "a cyclist",
+      spriteKey: "obstacleCyclist",
+      zone: "road",
+      interval: 2200,
+      minInterval: 700,
+      speed: 2.2,   // world px/frame — cyclists pedal forward (player always faster)
+    },
+    cancerCell: {
+      name: "a cancer cell",
+      spriteKey: "obstacleCell",
+      zone: "road",
+      interval: 3000,
+      minInterval: 900,
+      speed: 0,
+    },
+    pothole: {
+      name: "a pothole",
+      spriteKey: "obstaclePothole",
+      zone: "road",
+      interval: 2100,
+      minInterval: 380,
+      speed: 0,
+    },
+    tree: {
+      name: "a tree",
+      spriteKey: "obstacleTree",
+      zone: "grass",
+      interval: 1800,
+      minInterval: 650,
+      speed: 0,
+    },
   },
 
   PEDAL_FRAME_MS: 160, // ms per pedal animation frame swap

@@ -40,8 +40,14 @@ const Obstacles = (() => {
           spriteKey: def.spriteKey,
           worldX: _spawnX(def.zone),
           worldY: Player.worldY + spawnDist,
+          speed:  def.speed ?? 0,
         });
       }
+    }
+
+    // Move obstacles that have their own velocity
+    for (const obs of pool) {
+      if (obs.speed) obs.worldY += obs.speed;
     }
 
     // Cull anything that has scrolled off the top of the screen

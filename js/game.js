@@ -2,7 +2,7 @@
 const Game = (() => {
   const STATES = { MENU: "MENU", PLAYING: "PLAYING", GAMEOVER: "GAMEOVER" };
   let state, gameSpeed, lastTime, speedTimer, score;
-  let canvas, overlayStart, overlayGameover, finalScoreEl, crashIntoEl, crashSpriteCanvas;
+  let canvas, overlayStart, overlayGameover, finalScoreEl, crashIntoEl;
 
   function _setState(s) {
     state = s;
@@ -26,7 +26,6 @@ const Game = (() => {
     if (hit) {
       const def = CONFIG.OBSTACLE_TYPES[hit.key];
       crashIntoEl.textContent = def.name;
-      Renderer.drawObstaclePreview(hit.spriteKey, crashSpriteCanvas);
     }
     _setState(STATES.GAMEOVER);
   }
@@ -61,10 +60,9 @@ const Game = (() => {
     canvas = document.getElementById("game");
     overlayStart = document.getElementById("overlay-start");
     overlayGameover = document.getElementById("overlay-gameover");
-    finalScoreEl      = document.getElementById("final-score");
-    finalMoneyEl      = document.getElementById("final-money");
-    crashIntoEl       = document.getElementById("crash-into-name");
-    crashSpriteCanvas = document.getElementById("crash-sprite");
+    finalScoreEl = document.getElementById("final-score");
+    finalMoneyEl = document.getElementById("final-money");
+    crashIntoEl = document.getElementById("crash-into-name");
 
     _resizeCanvas();
     window.addEventListener("resize", _resizeCanvas);

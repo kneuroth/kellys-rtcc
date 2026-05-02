@@ -42,9 +42,9 @@ const Renderer = (() => {
     bikerLeft: (x, y) => _drawBiker(x, y, 0.25, false),
     bikerRight: (x, y) => _drawBiker(x, y, -0.25, false),
     bikerCrash: (x, y) => _drawBikerCrash(x, y),
-    obstacleTree:    (x, y) => _drawTree(x, y),
+    obstacleTree: (x, y) => _drawTree(x, y),
     obstacleCyclist: (x, y) => _drawCyclist(x, y),
-    obstacleCell:    (x, y) => _drawCancerCell(x, y),
+    obstacleCell: (x, y) => _drawCancerCell(x, y),
     obstaclePothole: (x, y) => _drawPothole(x, y),
   };
 
@@ -250,8 +250,14 @@ const Renderer = (() => {
     ctx.strokeStyle = "#2a2a2a";
     ctx.lineWidth = 1.5;
     ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(14, 3);  ctx.lineTo(20, 7);  ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-15, -4); ctx.lineTo(-21, -8); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(14, 3);
+    ctx.lineTo(20, 7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-15, -4);
+    ctx.lineTo(-21, -8);
+    ctx.stroke();
 
     ctx.restore();
   }
@@ -279,12 +285,9 @@ const Renderer = (() => {
     ctx.fillStyle = CONFIG.COLORS.road;
     ctx.fillRect(0, 0, w, h);
 
-    // Cracks — world-space positions, scroll identically to obstacles
-    // _drawCracks(w, h);
-
     // Road edges at fixed world X positions — shift with camera like everything else
     const lx = Math.floor(World.toScreen(-CONFIG.ROAD_HALF_W, 0).x);
-    const rx = Math.floor(World.toScreen( CONFIG.ROAD_HALF_W, 0).x);
+    const rx = Math.floor(World.toScreen(CONFIG.ROAD_HALF_W, 0).x);
 
     // Shoulder fills (only drawn when the edge is on screen)
     ctx.fillStyle = CONFIG.COLORS.grass;
@@ -292,7 +295,7 @@ const Renderer = (() => {
     if (rx < w) ctx.fillRect(rx, 0, w - rx, h);
 
     // Solid white edge lines
-    ctx.strokeStyle = CONFIG.COLORS.roadLine;
+    ctx.strokeStyle = CONFIG.COLORS.roadEdgeLine;
     ctx.lineWidth = 4;
     if (lx > -4 && lx < w + 4) {
       ctx.beginPath();
@@ -360,7 +363,7 @@ const Renderer = (() => {
       const sp = World.toScreen(pt.worldX, pt.worldY);
       if (sp.y < -20 || sp.y > canvas.height + 20) continue;
 
-      const a  = Math.max(0, pt.alpha);
+      const a = Math.max(0, pt.alpha);
       const r1 = _hash(pt.worldX | 0, pt.worldY | 0);
       const r2 = _hash((pt.worldX | 0) + 500, pt.worldY | 0);
 
@@ -381,7 +384,7 @@ const Renderer = (() => {
       ctx.lineCap = "round";
       for (let b = 0; b < 3; b++) {
         const bx = sp.x + (r2 * 16 - 8) + b * 5 - 5;
-        const by = sp.y + (r1 * 6  - 3);
+        const by = sp.y + (r1 * 6 - 3);
         ctx.beginPath();
         ctx.moveTo(bx, by);
         ctx.lineTo(bx + (r1 - 0.5) * 5, by - 5 - r2 * 4);
@@ -397,30 +400,101 @@ const Renderer = (() => {
     const hw = (CONFIG.SPRITE_SIZE * CONFIG.HITBOX_SHRINK) / 2;
     ctx.save();
     ctx.strokeStyle = color;
-    ctx.lineWidth   = 1.5;
+    ctx.lineWidth = 1.5;
     ctx.globalAlpha = 0.85;
     // Hitbox rect
     ctx.strokeRect(x - hw, y - hw, hw * 2, hw * 2);
     // Centre crosshair
     ctx.beginPath();
-    ctx.moveTo(x - 4, y); ctx.lineTo(x + 4, y);
-    ctx.moveTo(x, y - 4); ctx.lineTo(x, y + 4);
+    ctx.moveTo(x - 4, y);
+    ctx.lineTo(x + 4, y);
+    ctx.moveTo(x, y - 4);
+    ctx.lineTo(x, y + 4);
     ctx.stroke();
     // World coords label
-    ctx.fillStyle   = color;
+    ctx.fillStyle = color;
     ctx.globalAlpha = 0.9;
-    ctx.font        = "9px monospace";
-    ctx.textAlign   = "center";
+    ctx.font = "9px monospace";
+    ctx.textAlign = "center";
     ctx.fillText(`${Math.round(x)},${Math.round(y)}`, x, y - hw - 3);
     ctx.restore();
   }
 
+  // ── Fire trail ──────────────────────────────────────────────────────────────
+  const _fireColors = ["#cc2200", "#ff5500", "#ff8800", "#ffcc00"];
+
+  function _drawFireTrail(fireTrail) {
+    if (!fireTrail.length) return;
+    for (let i = 0; i < fireTrail.length; i++) {
+      const pt = fireTrail[i];
+      const sp = World.toScreen(pt.worldX, pt.worldY);
+      if (sp.y < -30 || sp.y > canvas.height + 30) continue;
+
+      const a = Math.max(0, pt.alpha);
+      const r1 = _hash(pt.worldX | 0, pt.worldY | 0);
+      const r2 = _hash((pt.worldX | 0) + 333, pt.worldY | 0);
+
+      ctx.save();
+      ctx.globalAlpha = a;
+
+      // Draw a small layered flame at each tyre position
+      for (const dx of [-5, 5]) {
+        const cx = sp.x + dx + (r1 - 0.5) * 3;
+        const cy = sp.y + (r2 - 0.5) * 3;
+
+        // Outer glow (large, translucent orange)
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 5 + r1 * 3, 9 + r2 * 4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "#ff5500";
+        ctx.globalAlpha = a * 0.35;
+        ctx.fill();
+
+        // Core flame layers — small and bright
+        for (let layer = 0; layer < 3; layer++) {
+          const frac = layer / 3;
+          const color =
+            _fireColors[Math.floor(frac * (_fireColors.length - 1))];
+          const rX = 3 - layer + r1 * 2;
+          const rY = 5 - layer + r2 * 3;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy - layer * 1.5, rX, rY, 0, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.globalAlpha = a * (0.9 - frac * 0.4);
+          ctx.fill();
+        }
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // ── Skid trail ──────────────────────────────────────────────────────────────
+  function _drawSkidTrail(skidTrail) {
+    if (!skidTrail.length) return;
+    for (const pt of skidTrail) {
+      const sp = World.toScreen(pt.worldX, pt.worldY);
+      if (sp.y < -20 || sp.y > canvas.height + 20) continue;
+
+      // Lean the marks slightly in the direction of the turn
+      const lean = pt.steer * 4;
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, pt.alpha) * 0.55;
+      ctx.fillStyle = "#111111";
+
+      ctx.beginPath();
+      ctx.ellipse(sp.x + lean, sp.y, 2, 6, pt.steer * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
   // ── Steering hint text ──────────────────────────────────────────────────────
   function _drawControlHint() {
-    const isTouchDevice = navigator.maxTouchPoints > 0;
-    const msg = isTouchDevice
-      ? "← touch here to steer →"
-      : "← hover here to steer →";
+    const msg =
+      canvas.width <= 768
+        ? "← touch here to steer →"
+        : "← hover here to steer →";
     ctx.font = "13px 'Arial', sans-serif";
     ctx.fillStyle = "rgba(255,255,255,0.35)";
     ctx.textAlign = "center";
@@ -432,7 +506,9 @@ const Renderer = (() => {
     _drawRoad();
 
     if (state === "PLAYING" || state === "GAMEOVER") {
-      // Grass trail (under everything else)
+      // Trails and marks — drawn under obstacles and biker
+      _drawFireTrail(Player.fireTrail);
+      _drawSkidTrail(Player.skidTrail);
       _drawTrail(Player.trail);
 
       // Obstacles
@@ -455,14 +531,14 @@ const Renderer = (() => {
 
   function _drawDebugHUD() {
     const steer = Input.steer.toFixed(2);
-    const wx    = Math.round(Player.worldX);
-    const wy    = Math.round(Player.worldY);
+    const wx = Math.round(Player.worldX);
+    const wy = Math.round(Player.worldY);
     ctx.save();
-    ctx.font        = "11px monospace";
-    ctx.fillStyle   = "#00ff88";
-    ctx.textAlign   = "right";
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "#00ff88";
+    ctx.textAlign = "right";
     ctx.shadowColor = "rgba(0,0,0,0.8)";
-    ctx.shadowBlur  = 4;
+    ctx.shadowBlur = 4;
     ctx.fillText(`[DEBUG] D to toggle`, canvas.width - 12, 20);
     ctx.fillText(`steer: ${steer}`, canvas.width - 12, 36);
     ctx.fillText(`worldX: ${wx}  worldY: ${wy}`, canvas.width - 12, 52);
@@ -470,32 +546,11 @@ const Renderer = (() => {
     ctx.restore();
   }
 
-  function drawObstaclePreview(spriteKey, previewCanvas) {
-    const pCtx = previewCanvas.getContext("2d");
-    const s    = previewCanvas.width;
-    pCtx.clearRect(0, 0, s, s);
-
-    // Subtle background disc so the sprite reads against the dark overlay
-    pCtx.beginPath();
-    pCtx.arc(s / 2, s / 2, s / 2 - 2, 0, Math.PI * 2);
-    pCtx.fillStyle = "rgba(255,255,255,0.07)";
-    pCtx.fill();
-
-    if (loaded[spriteKey]) {
-      pCtx.drawImage(loaded[spriteKey], 0, 0, s, s);
-    } else {
-      // Scale placeholders (designed for SPRITE_SIZE) up to fill the preview canvas
-      const scale = s / CONFIG.SPRITE_SIZE;
-      const prev  = ctx;
-      ctx = pCtx;
-      pCtx.save();
-      pCtx.translate(s / 2, s / 2);
-      pCtx.scale(scale, scale);
-      _placeholders[spriteKey]?.(0, 0);  // placeholder already does translate(x,y) internally
-      pCtx.restore();
-      ctx = prev;
-    }
-  }
-
-  return { init, drawFrame, setDebug: v => { debugMode = v; }, drawObstaclePreview };
+  return {
+    init,
+    drawFrame,
+    setDebug: (v) => {
+      debugMode = v;
+    },
+  };
 })();

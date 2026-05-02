@@ -166,12 +166,12 @@ body {
 /* ── Crash preview (game over screen) ───────────────────────────────── */
 .crash-into {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
   gap: 10px;
 }
 .crash-into h2 {
-  text-align: left;
+  text-align: center;
 }
 
 #crash-sprite {
