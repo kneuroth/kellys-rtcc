@@ -1,5 +1,9 @@
 // ─── USER CONFIG ────────────────────────────────────────────────────────────
 // Change DONATION_URL to update the donate button everywhere at once.
+
+// Best-guess mobile detection: same signal used for the touch/hover hint.
+const IS_MOBILE = window.innerWidth <= 768;
+
 const CONFIG = {
   DONATION_URL:
     "https://supportthepmcf.ca/ui/Ride26/p/c9777d5aaeb240b8a016feb40ab23247",
@@ -32,12 +36,13 @@ const CONFIG = {
   SPRITE_SIZE: 64, // all sprites must be this many px square
 
   // ─── GAME TUNING ──────────────────────────────────────────────────────────
-  BASE_SPEED: 4, // world px/frame at start
-  MAX_SPEED: 14,
-  SPEED_INCREMENT: 0.4, // added to speed every SPEED_INTERVAL ms
-  SPEED_INTERVAL: 3500, // ms between speed increases
+  //   Mobile values are nerfed — touch steering is less precise than a mouse.
+  BASE_SPEED:      IS_MOBILE ? 2.5 : 4,    // world px/frame at start
+  MAX_SPEED:       IS_MOBILE ? 8   : 14,
+  SPEED_INCREMENT: IS_MOBILE ? 0.2 : 0.4,  // ramps more gently on mobile
+  SPEED_INTERVAL: 3500,                     // ms between speed increases
 
-  MAX_LATERAL_SPEED: 6, // px/frame max left/right drift
+  MAX_LATERAL_SPEED: IS_MOBILE ? 4 : 6,    // px/frame max left/right drift
   MAX_WORLD_X: 1400, // hard clamp: biker can't drift beyond ±this
 
   // ─── OBSTACLE SPAWN RATES ─────────────────────────────────────────────────
