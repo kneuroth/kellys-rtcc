@@ -7,6 +7,7 @@ const IS_MOBILE = window.innerWidth <= 768;
 const CONFIG = {
   DONATION_URL:
     "https://supportthepmcf.ca/ui/Ride26/p/c9777d5aaeb240b8a016feb40ab23247",
+  SHARE_URL: "kelly-conquers-cancer.netlify.app/",
 
   COLORS: {
     primary: "#3A7BD5", // blue (logo top)
@@ -37,12 +38,12 @@ const CONFIG = {
 
   // ─── GAME TUNING ──────────────────────────────────────────────────────────
   //   Mobile values are nerfed — touch steering is less precise than a mouse.
-  BASE_SPEED:      IS_MOBILE ? 2.5 : 4,    // world px/frame at start
-  MAX_SPEED:       IS_MOBILE ? 8   : 14,
-  SPEED_INCREMENT: IS_MOBILE ? 0.2 : 0.4,  // ramps more gently on mobile
-  SPEED_INTERVAL: 3500,                     // ms between speed increases
+  BASE_SPEED: IS_MOBILE ? 2.5 : 4, // world px/frame at start
+  MAX_SPEED: IS_MOBILE ? 8 : 14,
+  SPEED_INCREMENT: IS_MOBILE ? 0.2 : 0.4, // ramps more gently on mobile
+  SPEED_INTERVAL: 3500, // ms between speed increases
 
-  MAX_LATERAL_SPEED: IS_MOBILE ? 4 : 6,    // px/frame max left/right drift
+  MAX_LATERAL_SPEED: IS_MOBILE ? 4 : 6, // px/frame max left/right drift
   MAX_WORLD_X: 1400, // hard clamp: biker can't drift beyond ±this
 
   // ─── OBSTACLE SPAWN RATES ─────────────────────────────────────────────────
@@ -52,15 +53,17 @@ const CONFIG = {
   OBSTACLE_TYPES: {
     cyclist: {
       name: "a cyclist",
+      emoji: "🚴",
       spriteKey: "obstacleCyclist",
       zone: "road",
       interval: 2200,
       minInterval: 700,
       speed: 2.2,
-      zLayer: 1,   // drawn on top of ground-level obstacles
+      zLayer: 1, // drawn on top of ground-level obstacles
     },
     cancerCell: {
       name: "a cancer cell",
+      emoji: "🦠",
       spriteKey: "obstacleCell",
       zone: "road",
       interval: 3000,
@@ -70,15 +73,17 @@ const CONFIG = {
     },
     pothole: {
       name: "a pothole",
+      emoji: "🕳️",
       spriteKey: "obstaclePothole",
       zone: "road",
       interval: 2100,
       minInterval: 380,
       speed: 0,
-      zLayer: 0,   // ground level — drawn first so cyclists ride over them
+      zLayer: 0, // ground level — drawn first so cyclists ride over them
     },
     tree: {
       name: "a tree",
+      emoji: "🌲",
       spriteKey: "obstacleTree",
       zone: "grass",
       interval: 1800,

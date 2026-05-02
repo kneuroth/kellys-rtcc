@@ -237,6 +237,27 @@ body {
   margin-bottom: 4px;
 }
 
+.gameover-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-share {
+  background: none;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 40px;
+  font-size: clamp(13px, 2vw, 17px);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-share:hover  { background: rgba(255,255,255,0.1); border-color: #fff; }
+.btn-share:active { transform: scale(0.97); }
+
 /* Divider */
 .btn-secondary {
   background: none;

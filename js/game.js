@@ -2,7 +2,12 @@
 const Game = (() => {
   const STATES = { MENU: "MENU", PLAYING: "PLAYING", GAMEOVER: "GAMEOVER" };
   let state, gameSpeed, lastTime, speedTimer, score;
-  let canvas, overlayStart, overlayGameover, finalScoreEl, crashIntoEl;
+  let canvas,
+    overlayStart,
+    overlayGameover,
+    finalScoreEl,
+    crashIntoEl,
+    shareBtn;
 
   function _setState(s) {
     state = s;
@@ -56,6 +61,33 @@ const Game = (() => {
     Renderer.drawFrame(state, score, gameSpeed);
   }
 
+  function _shareResults() {
+    const hit = Obstacles.lastHit;
+    const def = hit ? CONFIG.OBSTACLE_TYPES[hit.key] : null;
+    const crash = def ? ` and crashed right into ${def.name} ${def.emoji}` : "";
+    const text = `I rode ${score} meters with Kelly in his Ride to Conquer Cancer${crash}. Ride along here: ${CONFIG.SHARE_URL} 🚴`;
+
+    const _copyFallback = () => {
+      if (!navigator.clipboard) return;
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          const orig = shareBtn.textContent;
+          shareBtn.textContent = "Copied!";
+          setTimeout(() => {
+            shareBtn.textContent = orig;
+          }, 2000);
+        })
+        .catch(() => {});
+    };
+
+    if (IS_MOBILE && navigator.share) {
+      navigator.share({ text }).catch(_copyFallback);
+    } else {
+      _copyFallback();
+    }
+  }
+
   function init() {
     canvas = document.getElementById("game");
     overlayStart = document.getElementById("overlay-start");
@@ -63,6 +95,7 @@ const Game = (() => {
     finalScoreEl = document.getElementById("final-score");
     finalMoneyEl = document.getElementById("final-money");
     crashIntoEl = document.getElementById("crash-into-name");
+    shareBtn = document.getElementById("btn-share");
 
     _resizeCanvas();
     window.addEventListener("resize", _resizeCanvas);
@@ -76,6 +109,9 @@ const Game = (() => {
     document.querySelectorAll(".donate-link").forEach((el) => {
       el.href = CONFIG.DONATION_URL;
     });
+
+    // Share button
+    shareBtn.addEventListener("click", _shareResults);
 
     // Button listeners
     document.getElementById("btn-start").addEventListener("click", _startGame);
