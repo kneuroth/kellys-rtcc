@@ -40,7 +40,8 @@ const Obstacles = (() => {
           spriteKey: def.spriteKey,
           worldX: _spawnX(def.zone),
           worldY: Player.worldY + spawnDist,
-          speed:  def.speed ?? 0,
+          speed:  def.speed  ?? 0,
+          zLayer: def.zLayer ?? 1,
         });
       }
     }

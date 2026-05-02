@@ -511,11 +511,14 @@ const Renderer = (() => {
       _drawSkidTrail(Player.skidTrail);
       _drawTrail(Player.trail);
 
-      // Obstacles
-      for (const obs of Obstacles.pool) {
-        const s = World.toScreen(obs.worldX, obs.worldY);
-        _centeredSprite(obs.spriteKey, s.x, s.y);
-        if (debugMode) _drawHitbox(s.x, s.y, "#ff4444");
+      // Obstacles — two passes so zLayer 0 (ground) is always under zLayer 1
+      for (const layer of [0, 1]) {
+        for (const obs of Obstacles.pool) {
+          if (obs.zLayer !== layer) continue;
+          const s = World.toScreen(obs.worldX, obs.worldY);
+          _centeredSprite(obs.spriteKey, s.x, s.y);
+          if (debugMode) _drawHitbox(s.x, s.y, "#ff4444");
+        }
       }
 
       // Biker

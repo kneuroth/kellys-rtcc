@@ -51,7 +51,8 @@ const CONFIG = {
       zone: "road",
       interval: 2200,
       minInterval: 700,
-      speed: 2.2,   // world px/frame — cyclists pedal forward (player always faster)
+      speed: 2.2,
+      zLayer: 1,   // drawn on top of ground-level obstacles
     },
     cancerCell: {
       name: "a cancer cell",
@@ -60,6 +61,7 @@ const CONFIG = {
       interval: 3000,
       minInterval: 900,
       speed: 0,
+      zLayer: 1,
     },
     pothole: {
       name: "a pothole",
@@ -68,6 +70,7 @@ const CONFIG = {
       interval: 2100,
       minInterval: 380,
       speed: 0,
+      zLayer: 0,   // ground level — drawn first so cyclists ride over them
     },
     tree: {
       name: "a tree",
@@ -76,6 +79,7 @@ const CONFIG = {
       interval: 1800,
       minInterval: 650,
       speed: 0,
+      zLayer: 1,
     },
   },
 
